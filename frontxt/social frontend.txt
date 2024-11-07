@@ -1,0 +1,189 @@
+import React, { useState } from 'react';
+import './App.css';
+
+function App() {
+  const [users, setUsers] = useState([
+    { id: 1, name: 'Alice', following: false },
+    { id: 2, name: 'Bob', following: false },
+    { id: 3, name: 'Charlie', following: false },
+    { id: 4, name: 'David', following: false },
+  ]);
+
+  const [posts, setPosts] = useState([
+    { id: 1, content: "Hello world from Alice!", author: "Alice" },
+    { id: 2, content: "Learning React!", author: "Bob" },
+    { id: 3, content: "This is a post by Charlie", author: "Charlie" },
+  ]);
+
+  const [newsFeed, setNewsFeed] = useState([]);
+  const [newPost, setNewPost] = useState("");
+  const [currentUser] = useState("User123");
+  const [following, setFollowing] = useState([]);
+  const [followers] = useState(["David", "Emma"]); // Static followers for simplicity
+
+  // Toggle following a user
+  const toggleFollow = (userId) => {
+    const updatedUsers = users.map(user =>
+      user.id === userId ? { ...user, following: !user.following } : user
+    );
+
+    setUsers(updatedUsers);
+
+    // Update the list of users being followed
+    const newFollowing = updatedUsers.filter(user => user.following).map(user => user.name);
+    setFollowing(newFollowing);
+    updateNewsFeed(newFollowing);
+  };
+
+  // Update news feed with posts from followed users
+  const updateNewsFeed = (currentFollowing) => {
+    const feed = posts.filter(post => currentFollowing.includes(post.author));
+    setNewsFeed(feed);
+  };
+
+  // Create a post
+  const handleCreatePost = () => {
+    if (newPost) {
+      const post = { id: posts.length + 1, content: newPost, author: currentUser };
+      setPosts([post, ...posts]);
+      setNewsFeed([post, ...newsFeed]);
+      setNewPost(""); // Clear input
+    }
+  };
+
+  return (
+    <div id="app">
+      <header className="header">
+        <h1>Social Media Platform</h1>
+      </header>
+
+      <div className="content">
+        <div className="sidebar">
+          <h2>People</h2>
+          {users.map((user) => (
+            <div key={user.id} className="user">
+              <span>{user.name}</span>
+              <button onClick={() => toggleFollow(user.id)}>
+                {user.following ? "Unfollow" : "Follow"}
+              </button>
+            </div>
+          ))}
+
+          <div className="follow-info">
+            <h3>Following</h3>
+            {following.length > 0 ? (
+              following.map((user, index) => <div key={index}>{user}</div>)
+            ) : (
+              <p>No following yet</p>
+            )}
+            <h3>Followers</h3>
+            {followers.length > 0 ? (
+              followers.map((user, index) => <div key={index}>{user}</div>)
+            ) : (
+              <p>No followers yet</p>
+            )}
+          </div>
+        </div>
+
+        <div className="main-section">
+          <div className="create-post">
+            <textarea
+              placeholder="What's on your mind?"
+              value={newPost}
+              onChange={(e) => setNewPost(e.target.value)}
+            />
+            <button onClick={handleCreatePost}>Post</button>
+          </div>
+
+          <div className="feed">
+            <h2>News Feed</h2>
+            {newsFeed.length > 0 ? (
+              newsFeed.map((post) => (
+                <div key={post.id} className="post">
+                  <p><strong>{post.author}</strong></p>
+                  <p>{post.content}</p>
+                </div>
+              ))
+            ) : (
+              <p>No posts to show from people you follow.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+css styling
+
+#app {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header {
+  width: 100%;
+  padding: 20px;
+  background-color: #4a90e2;
+  color: white;
+  text-align: center;
+}
+
+.content {
+  display: flex;
+  width: 80%;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.users, .feed, .create-post {
+  width: 100%;
+}
+
+.users {
+  max-width: 200px;
+}
+
+.create-post textarea {
+  width: 100%;
+  height: 80px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: none;
+}
+
+button {
+  padding: 10px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button:hover {
+  background-color: #357abd;
+}
+
+.feed {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.post {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}

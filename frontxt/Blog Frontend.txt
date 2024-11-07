@@ -1,0 +1,231 @@
+import React, { useState } from 'react';
+import './App.css';
+
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
+  const [posts, setPosts] = useState([]);
+  const [newPost, setNewPost] = useState({ title: "", content: "", tags: "", category: "" });
+  const [comments, setComments] = useState({});
+  const [notifications, setNotifications] = useState([]);
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    setUsername("Blogger");
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUsername("");
+    setPosts([]);
+    setNewPost({ title: "", content: "", tags: "", category: "" });
+    setComments({});
+    setNotifications([]);
+  };
+
+  const createPost = () => {
+    if (newPost.title && newPost.content) {
+      const post = {
+        title: newPost.title,
+        content: newPost.content,
+        tags: newPost.tags.split(",").map(tag => tag.trim()),
+        category: newPost.category,
+        id: posts.length,
+        comments: []
+      };
+      setPosts([...posts, post]);
+      setNewPost({ title: "", content: "", tags: "", category: "" });
+      setNotifications([...notifications, `New post '${post.title}' created!`]);
+    }
+  };
+
+  const addComment = (postId, comment) => {
+    let updatedPosts = posts.map((post) => {
+      if (post.id === postId) {
+        return { ...post, comments: [...post.comments, comment] };
+      }
+      return post;
+    });
+    setPosts(updatedPosts);
+    setNotifications([...notifications, `Comment added to '${posts[postId].title}'`]);
+  };
+
+  return (
+    <div id="app">
+      <div className="header">
+        <h1>Blog Platform</h1>
+        {isLoggedIn ? (
+          <div>
+            <p>Welcome, {username}!</p>
+            <button onClick={handleLogout}>Logout</button>
+          </div>
+        ) : (
+          <button onClick={handleLogin}>Login as Blogger</button>
+        )}
+      </div>
+
+      <div className="content">
+        {isLoggedIn && (
+          <>
+            <div className="notification">
+              {notifications.map((note, index) => (
+                <div key={index} className="notification-item">{note}</div>
+              ))}
+            </div>
+
+            <div className="create-post-section">
+              <h2>Create a New Post</h2>
+              <input
+                type="text"
+                value={newPost.title}
+                onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                placeholder="Post Title"
+              />
+              <textarea
+                value={newPost.content}
+                onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                placeholder="Post Content"
+              />
+              <input
+                type="text"
+                value={newPost.tags}
+                onChange={(e) => setNewPost({ ...newPost, tags: e.target.value })}
+                placeholder="Tags (comma-separated)"
+              />
+              <input
+                type="text"
+                value={newPost.category}
+                onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
+                placeholder="Category"
+              />
+              <button onClick={createPost}>Create Post</button>
+            </div>
+
+            <h2>Blog Posts</h2>
+            <div className="posts-section">
+              {posts.map((post, index) => (
+                <div key={index} className="post-item">
+                  <h3>{post.title}</h3>
+                  <p>{post.content}</p>
+                  <p><strong>Category:</strong> {post.category}</p>
+                  <p><strong>Tags:</strong> {post.tags.join(", ")}</p>
+                  <h4>Comments:</h4>
+                  {post.comments.length > 0 ? (
+                    post.comments.map((comment, idx) => (
+                      <p key={idx} className="comment-item">{comment}</p>
+                    ))
+                  ) : (
+                    <p>No comments yet.</p>
+                  )}
+                  <input
+                    type="text"
+                    placeholder="Add a comment"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.target.value) {
+                        addComment(post.id, e.target.value);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+
+css styling
+#app {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header {
+  width: 100%;
+  padding: 20px;
+  background-color: #4CAF50;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.content {
+  width: 60%;
+  margin-top: 20px;
+}
+
+.notification {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.notification-item {
+  background-color: #f4f4f4;
+  padding: 10px;
+  border-left: 4px solid #4CAF50;
+  margin-bottom: 5px;
+}
+
+.create-post-section {
+  margin-top: 20px;
+}
+
+.create-post-section input, .create-post-section textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.posts-section {
+  width: 100%;
+}
+
+.post-item {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.comment-item {
+  padding-left: 10px;
+  margin-top: 5px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+input[type="text"] {
+  padding: 8px;
+  margin-right: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+button {
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}

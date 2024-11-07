@@ -1,0 +1,167 @@
+import React, { useState } from 'react';
+import './App.css';
+
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
+  const [wishlist, setWishlist] = useState([]);
+  const [products] = useState([
+    { id: 1, name: "Laptop", price: "$999" },
+    { id: 2, name: "Headphones", price: "$199" },
+    { id: 3, name: "Smartphone", price: "$699" },
+  ]);
+  const [notifications, setNotifications] = useState([]);
+
+  const handleSignup = (user) => {
+    // In a real-world app, integrate with a backend API for secure sign-up
+    setIsLoggedIn(true);
+    setUsername(user);
+  };
+
+  const handleLogin = (user) => {
+    // In a real-world app, implement secure login with API
+    setIsLoggedIn(true);
+    setUsername(user);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUsername("");
+    setWishlist([]);
+    setNotifications([]);
+  };
+
+  const addToWishlist = (product) => {
+    if (!wishlist.includes(product)) {
+      setWishlist([...wishlist, product]);
+      setNotifications([...notifications, `${product.name} added to your wishlist!`]);
+    }
+  };
+
+  return (
+    <div id="app">
+      <div className="header">
+        <h1>E-commerce App</h1>
+        {isLoggedIn ? (
+          <div>
+            <p>Welcome, {username}!</p>
+            <button onClick={handleLogout}>Logout</button>
+          </div>
+        ) : (
+          <div>
+            <button onClick={() => handleSignup("NewUser")}>Sign Up</button>
+            <button onClick={() => handleLogin("ExistingUser")}>Login</button>
+          </div>
+        )}
+      </div>
+
+      <div className="content">
+        {isLoggedIn && (
+          <>
+            <div className="notification">
+              {notifications.map((note, index) => (
+                <div key={index} className="notification-item">{note}</div>
+              ))}
+            </div>
+
+            <h2>Product Listing</h2>
+            <div className="products-section">
+              {products.map((product) => (
+                <div key={product.id} className="product-item">
+                  <h3>{product.name}</h3>
+                  <p>Price: {product.price}</p>
+                  <button onClick={() => addToWishlist(product)}>Add to Wishlist</button>
+                </div>
+              ))}
+            </div>
+
+            <h2>Wishlist</h2>
+            <div className="wishlist-section">
+              {wishlist.length > 0 ? (
+                wishlist.map((product, index) => (
+                  <div key={index} className="wishlist-item">{product.name} - {product.price}</div>
+                ))
+              ) : (
+                <p>Your wishlist is empty.</p>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+css styling
+
+#app {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header {
+  width: 100%;
+  padding: 20px;
+  background-color: #4CAF50;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.content {
+  width: 60%;
+  margin-top: 20px;
+}
+
+.notification {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.notification-item {
+  background-color: #f4f4f4;
+  padding: 10px;
+  border-left: 4px solid #4CAF50;
+  margin-bottom: 5px;
+}
+
+.products-section, .wishlist-section {
+  width: 100%;
+}
+
+.product-item, .wishlist-item {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+input[type="text"] {
+  padding: 8px;
+  margin-right: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+button {
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
