@@ -1,0 +1,201 @@
+const express = require('express');
+const mysql = require('mysql2');
+const bcrypt = require('bcryptjs');    // For password hashing
+const jwt = require('jsonwebtoken');   // For JWT authentication
+const bodyParser = require('body-parser');
+
+const app = express();
+const port = 3000;
+const JWT_SECRET = 'your_jwt_secret';  // Replace with an environment variable in production
+
+app.use(bodyParser.json());
+
+// MySQL connection setup
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',       // replace with your MySQL username
+    password: 'password', // replace with your MySQL password
+    database: 'ecommerce', // your database name
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
+
+// Register a new user with hashed password
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const sql = 'INSERT INTO users (username, password) VALUES (?, ?)';
+    pool.query(sql, [username, hashedPassword], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(201).json({ message: 'User registered', userId: result.insertId });
+    });
+});
+
+// User login with JWT authentication
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+
+    const sql = 'SELECT * FROM users WHERE username = ?';
+    pool.query(sql, [username], async (err, results) => {
+        if (err || results.length === 0) return res.status(401).json({ error: 'User not found' });
+
+        const user = results[0];
+        const validPassword = await bcrypt.compare(password, user.password);
+
+        if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
+
+        const token = jwt.sign({ id: user.id }, JWT_SECRET);
+        res.json({ message: 'Login successful', token });
+    });
+});
+
+// Authentication middleware
+const authenticate = (req, res, next) => {
+    const token = req.header('Authorization');
+    if (!token) return res.status(403).json({ error: 'Access denied' });
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ error: 'Invalid token' });
+        req.user = user;
+        next();
+    });
+};
+
+// List all products
+app.get('/products', (req, res) => {
+    const sql = 'SELECT * FROM products';
+    pool.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+// Add a product to wishlist
+app.post('/wishlist', authenticate, (req, res) => {
+    const { product_id } = req.body;
+    const { id: user_id } = req.user;
+
+    const sql = 'INSERT INTO wishlist (user_id, product_id) VALUES (?, ?)';
+    pool.query(sql, [user_id, product_id], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(201).json({ message: 'Product added to wishlist' });
+    });
+});
+
+// Get user's wishlist
+app.get('/wishlist', authenticate, (req, res) => {
+    const { id: user_id } = req.user;
+
+    const sql = `
+        SELECT p.id, p.name, p.price, p.description
+        FROM wishlist w
+        JOIN products p ON w.product_id = p.id
+        WHERE w.user_id = ?
+    `;
+    pool.query(sql, [user_id], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+// Start the server
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+});
+
+
+
+
+-- Create the `ecommerce` database
+CREATE DATABASE IF NOT EXISTS ecommerce;
+USE ecommerce;
+
+-- Create `users` table
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+-- Create `products` table
+CREATE TABLE products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL
+);
+
+-- Create `wishlist` table to associate users and products
+CREATE TABLE wishlist (
+    user_id INT NOT NULL,
+    product_id INT NOT NULL,
+    PRIMARY KEY (user_id, product_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+-- Insert sample products
+INSERT INTO products (name, description, price) VALUES 
+('Laptop', 'High performance laptop', 999.99),
+('Headphones', 'Noise-cancelling headphones', 199.99),
+('Smartphone', 'Latest model smartphone', 699.99);
+
+
+
+1)Register a New User
+
+URL: http://localhost:3000/register
+Method: POST
+Body:
+json
+Copy code
+{
+  "username": "johndoe",
+  "password": "mypassword123"
+}
+
+
+
+2)Login as User
+
+URL: http://localhost:3000/login
+
+Method: POST
+
+Body:
+
+json
+Copy code
+{
+  "username": "johndoe",
+  "password": "mypassword123"
+}
+
+3)Add a Product to Wishlist
+
+URL: http://localhost:3000/wishlist
+Method: POST
+Headers:
+Authorization: Bearer <JWT_TOKEN>
+Body:
+json
+Copy code
+{
+  "product_id": 1
+}
+
+
+4)Get User's Wishlist
+
+URL: http://localhost:3000/wishlist
+Method: GET
+Headers:
+Authorization: Bearer <JWT_TOKEN>
+
+
+5)List All Products
+
+URL: http://localhost:3000/products
+Method: GET
