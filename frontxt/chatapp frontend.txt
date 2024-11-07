@@ -1,0 +1,232 @@
+import React, { useState } from 'react';
+import './App.css';
+
+function App() {
+  const [groups, setGroups] = useState({}); // Store groups and their messages/members
+  const [currentGroup, setCurrentGroup] = useState(null); // Store the currently selected group
+  const [newGroupName, setNewGroupName] = useState(""); // For creating a new group
+  const [newMessage, setNewMessage] = useState(""); // For sending a new message
+  const [newMember, setNewMember] = useState(""); // For adding new members to a group
+
+  const createGroup = () => {
+    if (newGroupName && !groups[newGroupName]) {
+      setGroups({
+        ...groups,
+        [newGroupName]: { messages: [], members: [] },
+      });
+      setNewGroupName(""); // Clear input
+    }
+  };
+
+  const selectGroup = (groupName) => {
+    setCurrentGroup(groupName);
+  };
+
+  const sendMessage = () => {
+    if (newMessage && currentGroup) {
+      setGroups({
+        ...groups,
+        [currentGroup]: {
+          ...groups[currentGroup],
+          messages: [...groups[currentGroup].messages, newMessage],
+        },
+      });
+      setNewMessage(""); // Clear input
+    }
+  };
+
+  const addMember = () => {
+    if (newMember && currentGroup && !groups[currentGroup].members.includes(newMember)) {
+      setGroups({
+        ...groups,
+        [currentGroup]: {
+          ...groups[currentGroup],
+          members: [...groups[currentGroup].members, newMember],
+        },
+      });
+      setNewMember(""); // Clear input
+    }
+  };
+
+  return (
+    <div id="app">
+      <div className="sidebar">
+        <h2>Groups</h2>
+        <input
+          type="text"
+          value={newGroupName}
+          onChange={(e) => setNewGroupName(e.target.value)}
+          placeholder="Enter group name"
+        />
+        <button onClick={createGroup}>Create Group</button>
+        <div id="groups">
+          {Object.keys(groups).map((group) => (
+            <div key={group} onClick={() => selectGroup(group)}>
+              {group}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="chat-section">
+        <h2 id="group-title">{currentGroup ? `Group: ${currentGroup}` : "Select a Group"}</h2>
+        {currentGroup && (
+          <>
+            <div id="chat-window">
+              {groups[currentGroup].messages.map((msg, index) => (
+                <div key={index}>{msg}</div>
+              ))}
+            </div>
+            <div id="members">
+              <h3>Members</h3>
+              {groups[currentGroup].members.length > 0 ? (
+                groups[currentGroup].members.map((member, index) => (
+                  <div key={index} className="member-item">
+                    {member}
+                  </div>
+                ))
+              ) : (
+                <div>No members</div>
+              )}
+              <input
+                type="text"
+                value={newMember}
+                onChange={(e) => setNewMember(e.target.value)}
+                placeholder="Add member"
+              />
+              <button onClick={addMember}>Add Member</button>
+            </div>
+            <div className="message-input-section">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message"
+              />
+              <button onClick={sendMessage}>Send</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+css styling
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background-color: #f5f5f5;
+}
+
+#app {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 25%;
+  padding: 15px;
+  background-color: #2c3e50;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar h2 {
+  margin-bottom: 20px;
+}
+
+#groups {
+  width: 100%;
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+#groups div {
+  padding: 10px;
+  background-color: #34495e;
+  margin-bottom: 8px;
+  cursor: pointer;
+  text-align: center;
+  border-radius: 5px;
+}
+
+#groups div:hover {
+  background-color: #1abc9c;
+}
+
+button {
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  color: white;
+  background-color: #1abc9c;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #16a085;
+}
+
+.chat-section {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  background-color: #ecf0f1;
+}
+
+#group-title {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #2c3e50;
+}
+
+#chat-window {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background-color: white;
+  border-radius: 5px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+#members {
+  margin-top: 10px;
+  background-color: #ecf0f1;
+  padding: 10px;
+  border: 1px solid #bdc3c7;
+  border-radius: 5px;
+}
+
+.member-item {
+  background-color: #bdc3c7;
+  padding: 8px;
+  border-radius: 5px;
+  margin-bottom: 5px;
+}
+
+.message-input-section {
+  display: flex;
+  align-items: center;
+}
+
+#message-input {
+  padding: 10px;
+  border: 1px solid #bdc3c7;
+  border-radius: 5px;
+  margin-right: 10px;
+  flex-grow: 1;
+}
